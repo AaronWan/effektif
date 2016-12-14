@@ -16,18 +16,6 @@
 package com.effektif.server.test;
 
 
-import static org.junit.Assert.*;
-
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Application;
-import javax.ws.rs.core.MediaType;
-
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.test.JerseyTest;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.effektif.mongo.MongoConfiguration;
 import com.effektif.server.EffektifJsonProvider;
 import com.effektif.server.WorkflowServer;
@@ -36,13 +24,26 @@ import com.effektif.workflow.api.activities.EndEvent;
 import com.effektif.workflow.api.activities.NoneTask;
 import com.effektif.workflow.api.activities.ReceiveTask;
 import com.effektif.workflow.api.activities.StartEvent;
-import com.effektif.workflow.api.model.Deployment;
-import com.effektif.workflow.api.model.Message;
-import com.effektif.workflow.api.model.TriggerInstance;
-import com.effektif.workflow.api.model.WorkflowInstanceId;
+import com.effektif.workflow.api.model.*;
 import com.effektif.workflow.api.workflow.ExecutableWorkflow;
 import com.effektif.workflow.api.workflowinstance.WorkflowInstance;
+import com.effektif.workflow.impl.bpmn.BpmnMapper;
+import com.effektif.workflow.impl.json.DefaultJsonStreamMapper;
 import com.effektif.workflow.impl.json.JsonStreamMapper;
+import jodd.io.FileUtil;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.test.JerseyTest;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.Application;
+import javax.ws.rs.core.MediaType;
+import java.io.IOException;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Tom Baeyens
@@ -84,7 +85,7 @@ public class ServerTest extends JerseyTest {
   }
 
   @Test
-  public void test() {
+  public void test() throws IOException {
     // Create a workflow
     ExecutableWorkflow workflow = new ExecutableWorkflow()
       .sourceWorkflowId("Server test workflow")
@@ -97,16 +98,21 @@ public class ServerTest extends JerseyTest {
       .activity("Four", new NoneTask()
         .transitionToNext())
       .activity("Five", new EndEvent());
-
-    // String str = getConfiguration().get(JsonService.class).objectToJsonString(workflow);
-
+    String path="/Users/Aaron/Documents/facishare/code/gitfirstshare/opensourcestudy/activiti/src/main/java/com/opensource/test.bpmn";
+    byte[] bytes=FileUtil.readBytes(path);
+//     String str = getConfiguration().get(JsonService.class).objectToJsonString(new BpmnMapper(new DefaultJsonStreamMapper()).readFromString(new String(bytes)));
+    WorkflowId id=workflow.getId();
+    workflow= (ExecutableWorkflow) new BpmnMapper(new DefaultJsonStreamMapper()).readFromString(new String(bytes));
+    workflow.setId(id);
+    workflow.setSourceWorkflowId("love_flow");
+    workflow.setProperty("telant_id",7);
     Deployment deployment = target("deploy").request()
             .post(Entity.entity(workflow, MediaType.APPLICATION_JSON))
             .readEntity(Deployment.class);
 
     assertFalse(deployment.getIssueReport(), deployment.hasIssues());
     
-    runProcessInstance();
+
 //    for (int i=0; i<20; i++) {
 //      runProcessInstance(workflowId);
 //    }
@@ -118,11 +124,16 @@ public class ServerTest extends JerseyTest {
 //    long end = System.currentTimeMillis();
 //    log.info("1000 process instances in "+((end-start)/1000f)+ " seconds");
 //    log.info("1000 process instances in "+(1000000f/(end-start))+ " per second");
+    runProcessInstance();
+  }
+  @Test
+  public void testRunProcessInstance(){
+    runProcessInstance();
   }
 
   protected void runProcessInstance() {
     TriggerInstance start = new TriggerInstance()
-      .sourceWorkflowId("Server test workflow");
+      .sourceWorkflowId("love_flow");
 
     WorkflowInstance workflowInstance = target("start").request()
             .post(Entity.entity(start, MediaType.APPLICATION_JSON))

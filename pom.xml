@@ -40,6 +40,10 @@
     <module>effektif-adapter-activity</module>
     <module>effektif-server</module>
     <module>effektif-adapter</module>
+    <module>effektif-examples/cli</module>
+    <module>effektif-examples/tutorial</module>
+    <module>effektif-email</module>
+    <module>effektif-script</module>
   </modules>
 
   <dependencies>
